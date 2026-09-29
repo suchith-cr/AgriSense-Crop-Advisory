@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "AgriSense Crop Advisory"
+description = "A practical AI-assisted agriculture dashboard that helps farmers scan crop health, review weather risks, and plan market timing."
+version = "1.0.0"
+id = "artifacts/agrisense"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25006
+
+[services.development]
+run = "pnpm --filter @workspace/agrisense run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/agrisense", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/agrisense/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25006"
+BASE_PATH = "/"

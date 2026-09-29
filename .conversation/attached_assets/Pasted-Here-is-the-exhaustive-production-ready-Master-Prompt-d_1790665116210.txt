@@ -1,0 +1,299 @@
+Here is the exhaustive, production-ready Master Prompt designed to be pasted directly into an AI coding agent (like Cursor, Claude Code, or Bolt).
+
+---
+
+# MASTER PROMPT: AI-Powered Agriculture Crop Advisory Assistant
+
+### 1. Header & System Persona Role
+
+**Role:** You are an Elite Principal Full-Stack Engineer, AI Systems Architect, and UI/UX Expert.
+**Task:** Build an end-to-end, production-ready "AI-Powered Agriculture Crop Advisory Assistant." You will generate all necessary frontend and backend code, database schemas, and AI integration logic without skipping steps or leaving placeholders. Write clean, modular, highly scalable, and well-commented code.
+
+### 2. Core Mission Directive
+
+Create a comprehensive, intelligent web application that solves critical challenges for farmers. The system must seamlessly accept inputs (crop images, location data, and crop details), orchestrate data with backend APIs, leverage Google's latest Gemini AI models for multi-modal analysis, and securely store user histories in a PostgreSQL database. The application must be instantly usable, responsive, and robust against errors.
+
+### 3. Product Goal
+
+To provide farmers with a unified, AI-driven dashboard that mitigates agricultural risks by:
+
+1. Detecting crop diseases from uploaded images with high accuracy.
+2. Providing actionable, weather-based farming alerts.
+3. Suggesting optimal selling times and market strategies to maximize farmer income.
+
+### 4. Mandatory Features
+
+* **Disease Detection Engine:** Drag-and-drop image upload to analyze leaf/crop anomalies using Gemini's multi-modal capabilities.
+* **Weather Advisory Module:** Location-based input that generates AI-interpreted risk alerts (e.g., impending frost, drought, heavy rainfall).
+* **Market Intelligence Tracker:** Crop-specific yield analysis that predicts optimal market timing based on historical logic and AI reasoning.
+* **Unified Farmer Dashboard:** A central hub where users can view all past AI assessments and historical data.
+
+### 5. Technology Requirements
+
+You MUST strictly adhere to the following tech stack:
+
+* **Frontend:** React.js (Functional components, Hooks), Tailwind CSS (for all styling).
+* **Backend:** Node.js with Express.js.
+* **Database:** Replit Postgres (PostgreSQL).
+* **AI Integration:** `@google/genai` SDK (Strictly server-side; NEVER expose API keys on the frontend).
+* **Validation:** Zod (for validating all API requests and AI structured JSON outputs).
+
+### 6. Application Pages (Routes)
+
+Implement the following React Router (`react-router-dom`) paths:
+
+* `/` - **Dashboard:** Overview of recent analyses and quick links to modules.
+* `/disease-scanner` - **Scanner:** UI for uploading crop images and viewing diagnostic results.
+* `/weather-alerts` - **Weather:** Form for location input and display of meteorological advisories.
+* `/market-insights` - **Market:** Input for crop type/volume and display of market timing suggestions.
+
+### 7. User Flow
+
+1. **Entry:** User lands on the Dashboard.
+2. **Action Selection:** User selects one of the three primary modules (Disease, Weather, Market).
+3. **Data Input:** User provides necessary context (Image upload, location text, or crop details).
+4. **Processing state:** UI shows a loading skeleton/spinner with helpful farming tips.
+5. **AI Execution:** Frontend sends data to Node/Express backend -> Backend validates with Zod -> Backend calls `@google/genai` -> AI returns structured JSON -> Backend saves to Replit Postgres -> Backend responds to Frontend.
+6. **Result:** User views the formatted AI advisory and can navigate back to the Dashboard to see it in their history.
+
+### 8. Target Domains & Categorization
+
+* **Primary Domain:** Agronomy, Plant Pathology, Agricultural Economics.
+* **Tone:** Professional, accessible, practical, and highly empathetic to the realities of farming.
+* **Units:** Ensure metrics are practical (e.g., percentage confidence for diseases, actionable timeframes for markets).
+
+### 9. Form & Advisory Configuration
+
+* **Disease Form:** File input (accepts `.jpg`, `.png`, max 5MB) with drag-and-drop zone.
+* **Weather Form:** Text input for `Location (City/Region)` and dropdown for `Current Season`.
+* **Market Form:** Dropdown for `Crop Type` (e.g., Wheat, Corn, Rice, Soybeans) and number input for `Estimated Yield (Tons)`.
+* **Advisory UI:** Results must be displayed in clean, Tailwind-styled cards with color-coded severity badges (Red=Critical, Yellow=Warning, Green=Optimal).
+
+### 10. Database Schema (Production SQL for PostgreSQL)
+
+Execute this schema in Replit Postgres to initialize the database:
+
+```sql
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    farmer_name VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE crop_diagnostics (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    image_url TEXT,
+    disease_name VARCHAR(255),
+    confidence_score NUMERIC(5,2),
+    treatment_plan TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE weather_advisories (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    location VARCHAR(255),
+    alert_level VARCHAR(50),
+    action_plan TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE market_insights (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    crop_type VARCHAR(100),
+    best_time_to_sell VARCHAR(100),
+    market_strategy TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+```
+
+### 11. Row Level Security (RLS) / Data Isolation Rules
+
+Though a full authentication system is out of scope for this hackathon build, architect the queries to always filter by a simulated `user_id` passed in the headers or body.
+
+* Ensure `SELECT`, `INSERT`, and `UPDATE` operations on `crop_diagnostics`, `weather_advisories`, and `market_insights` strictly enforce `WHERE user_id = $1`.
+
+### 12. Backend API Routes
+
+Implement these endpoints in Express.js:
+
+* `GET /api/dashboard/:userId` - Fetches the 5 most recent entries from all three tables.
+* `POST /api/analyze-disease` - Accepts Base64 image and `userId`.
+* `POST /api/weather-advisory` - Accepts `location`, `season`, and `userId`.
+* `POST /api/market-timing` - Accepts `cropType`, `yield`, and `userId`.
+
+### 13. Gemini SDK Setup & Server-Side Security
+
+* Initialize the client strictly on the backend:
+
+```javascript
+const { GoogleGenAI } = require('@google/genai');
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+```
+
+* NEVER pass the API key to the React frontend.
+* Handle `@google/genai` API rate limits and timeouts gracefully with `try/catch` blocks.
+
+### 14. AI System Prompt
+
+Inject this system prompt into all Gemini calls:
+*"You are an expert Agronomist, Plant Pathologist, and Agricultural Economist. Your goal is to provide highly accurate, actionable, and safe advice to farmers to prevent crop loss and maximize yield/income. Always return your answers in strictly valid JSON matching the requested schema. Never include markdown formatting like ```json in the output."*
+
+### 15. Detailed AI Prompts (with required JSON Schemas)
+
+Enforce `responseSchema` and `responseMimeType: "application/json"` using the `@google/genai` SDK for reliable structured data.
+
+**Disease Prompt:** "Analyze the provided image of a crop/leaf. Identify any visible diseases or pests."
+**Schema:**
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "diseaseName": { "type": "string" },
+    "confidenceScore": { "type": "number", "description": "0-100" },
+    "severity": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"] },
+    "treatmentPlan": { "type": "string" },
+    "preventativeMeasures": { "type": "string" }
+  },
+  "required": ["diseaseName", "confidenceScore", "severity", "treatmentPlan", "preventativeMeasures"]
+}
+
+```
+
+**Weather Prompt:** "Given the location [LOCATION] and season [SEASON], provide a proactive farming advisory."
+**Schema:**
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "alertLevel": { "type": "string", "enum": ["NORMAL", "WATCH", "WARNING"] },
+    "shortTermAction": { "type": "string" },
+    "longTermAdvice": { "type": "string" }
+  },
+  "required": ["alertLevel", "shortTermAction", "longTermAdvice"]
+}
+
+```
+
+**Market Prompt:** "For a farmer with [YIELD] tons of [CROP_TYPE], analyze current global market trends and suggest selling strategies."
+**Schema:**
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "bestTimeToSell": { "type": "string" },
+    "estimatedPriceTrend": { "type": "string", "enum": ["RISING", "STABLE", "FALLING"] },
+    "strategyRecommendation": { "type": "string" }
+  },
+  "required": ["bestTimeToSell", "estimatedPriceTrend", "strategyRecommendation"]
+}
+
+```
+
+### 16. Zod Validation Requirements
+
+Create a `validations.js` file on the backend.
+
+* Validate all incoming POST request bodies.
+* Example for Market:
+
+```javascript
+const marketSchema = z.object({
+  userId: z.string().uuid(),
+  cropType: z.string().min(2),
+  yield: z.number().positive()
+});
+
+```
+
+* Respond with HTTP 400 and the Zod error message if validation fails before hitting the AI or Database.
+
+### 17. Frontend Components List
+
+Build these reusable React/Tailwind components:
+
+1. `Navbar.jsx` - Top navigation.
+2. `Sidebar.jsx` - Left navigation for the modules.
+3. `ImageUploader.jsx` - Drag-and-drop component parsing files to Base64.
+4. `StatusBadge.jsx` - Reusable pill for Severity/Alert Levels (Red/Yellow/Green).
+5. `AdvisoryCard.jsx` - Standardized display for AI results.
+6. `DashboardHistoryTable.jsx` - Table showing past queries fetched from Postgres.
+
+### 18. Security Requirements
+
+* Validate image size on the frontend (Max 5MB) AND backend before sending to Gemini.
+* Strip any HTML from text inputs to prevent XSS.
+* Use parameterized queries (or an ORM/Query Builder) for all Postgres interactions to prevent SQL injection.
+
+### 19. Environment Variables Template
+
+Provide a `.env.example` file:
+
+```env
+PORT=5000
+GEMINI_API_KEY=your_google_genai_api_key_here
+DATABASE_URL=postgresql://user:password@host:port/dbname
+
+```
+
+### 20. Suggested Folder Structure
+
+```text
+/
+├── backend/
+│   ├── server.js
+│   ├── routes/
+│   │   ├── analyze.js
+│   │   ├── dashboard.js
+│   ├── db/
+│   │   └── index.js
+│   ├── utils/
+│   │   ├── gemini.js
+│   │   └── validations.js
+├── frontend/
+│   ├── src/
+│   │   ├── App.jsx
+│   │   ├── components/
+│   │   ├── pages/
+│   │   │   ├── Dashboard.jsx
+│   │   │   ├── DiseaseScanner.jsx
+│   │   │   ├── WeatherAlerts.jsx
+│   │   │   ├── MarketInsights.jsx
+│   │   ├── services/
+│   │   │   └── api.js
+│   ├── package.json
+│   ├── tailwind.config.js
+
+```
+
+### 21. Implementation Phases
+
+Execute the build in the following strict order:
+
+* **Phase 1: Foundation.** Set up the Node/Express backend, connect to Replit Postgres, and run the SQL table creation script.
+* **Phase 2: AI Engine.** Implement the `@google/genai` integration with the Zod validation and specific JSON schemas. Ensure APIs return mocked DB insertion success.
+* **Phase 3: Frontend Skeleton.** Set up React, React Router, and Tailwind. Build out the routing structure and empty pages.
+* **Phase 4: Integration.** Connect frontend forms to backend routes. Implement the `ImageUploader` and rendering of `AdvisoryCard`s based on AI responses.
+* **Phase 5: Polish.** Add loading states (spinners), error handling (toasts), and finalize Tailwind styling.
+
+### 22. Acceptance Criteria
+
+The application is considered complete when:
+
+* A user can successfully upload an image of a leaf and receive a structured JSON response identifying the disease and treatment plan, which is concurrently saved to the Postgres database.
+* A user can request market/weather data and receive structured advice.
+* The Dashboard successfully retrieves and displays history from the database.
+* The UI is fully styled with Tailwind CSS, responsive on mobile, and contains zero console errors.
+
+### 23. Final Instruction to Coding Agent
+
+Acknowledge this master prompt by confirming your system persona. Then, output the complete workspace folder structure and immediately begin executing Phase 1 (Foundation and Database setup). Do not ask for permission to proceed—write the code.

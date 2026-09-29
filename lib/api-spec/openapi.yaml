@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: advisory
+    description: Crop advisory operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,109 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /dashboard/{userId}:
+    get:
+      operationId: getDashboard
+      tags: [advisory]
+      summary: Get recent advisory history
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        "200":
+          description: Dashboard summary and recent entries
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /analyze-disease:
+    post:
+      operationId: analyzeDisease
+      tags: [advisory]
+      summary: Analyze a crop image for disease risk
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DiseaseAnalysisInput"
+      responses:
+        "200":
+          description: Crop diagnosis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiseaseAnalysis"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: AI provider unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /weather-advisory:
+    post:
+      operationId: createWeatherAdvisory
+      tags: [advisory]
+      summary: Create a weather-aware farming advisory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WeatherAdvisoryInput"
+      responses:
+        "200":
+          description: Weather advisory
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeatherAdvisory"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /market-timing:
+    post:
+      operationId: createMarketInsight
+      tags: [advisory]
+      summary: Create a crop market timing insight
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MarketInsightInput"
+      responses:
+        "200":
+          description: Market insight
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MarketInsight"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +138,183 @@ components:
           type: string
       required:
         - status
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+    Dashboard:
+      type: object
+      properties:
+        userId:
+          type: string
+        stats:
+          $ref: "#/components/schemas/DashboardStats"
+        recentActivity:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActivityItem"
+        latestDisease:
+          anyOf:
+            - $ref: "#/components/schemas/DiseaseAnalysis"
+            - type: "null"
+        latestWeather:
+          anyOf:
+            - $ref: "#/components/schemas/WeatherAdvisory"
+            - type: "null"
+        latestMarket:
+          anyOf:
+            - $ref: "#/components/schemas/MarketInsight"
+            - type: "null"
+      required: [userId, stats, recentActivity, latestDisease, latestWeather, latestMarket]
+    DashboardStats:
+      type: object
+      properties:
+        totalAnalyses:
+          type: integer
+        healthyScans:
+          type: integer
+        activeAlerts:
+          type: integer
+        marketSignals:
+          type: integer
+      required: [totalAnalyses, healthyScans, activeAlerts, marketSignals]
+    ActivityItem:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [disease, weather, market]
+        title:
+          type: string
+        detail:
+          type: string
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, type, title, detail, status, createdAt]
+    DiseaseAnalysisInput:
+      type: object
+      properties:
+        userId:
+          type: string
+          minLength: 1
+        imageData:
+          type: string
+          minLength: 1
+          description: Base64 encoded image data URL
+        imageName:
+          type: string
+          maxLength: 255
+      required: [userId, imageData]
+    DiseaseAnalysis:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        diseaseName:
+          type: string
+        confidenceScore:
+          type: number
+        severity:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, CRITICAL]
+        treatmentPlan:
+          type: string
+        preventativeMeasures:
+          type: string
+        imageName:
+          type: ["string", "null"]
+        provider:
+          type: string
+          enum: [gemini, demo]
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, userId, diseaseName, confidenceScore, severity, treatmentPlan, preventativeMeasures, imageName, provider, createdAt]
+    WeatherAdvisoryInput:
+      type: object
+      properties:
+        userId:
+          type: string
+          minLength: 1
+        location:
+          type: string
+          minLength: 2
+          maxLength: 255
+        season:
+          type: string
+          enum: [Spring, Summer, Monsoon, Autumn, Winter]
+      required: [userId, location, season]
+    WeatherAdvisory:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        location:
+          type: string
+        season:
+          type: string
+        alertLevel:
+          type: string
+          enum: [NORMAL, WATCH, WARNING]
+        shortTermAction:
+          type: string
+        longTermAdvice:
+          type: string
+        provider:
+          type: string
+          enum: [gemini, demo]
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, userId, location, season, alertLevel, shortTermAction, longTermAdvice, provider, createdAt]
+    MarketInsightInput:
+      type: object
+      properties:
+        userId:
+          type: string
+          minLength: 1
+        cropType:
+          type: string
+          enum: [Wheat, Corn, Rice, Soybeans, Cotton, Sugarcane]
+        yieldTons:
+          type: number
+          exclusiveMinimum: 0
+      required: [userId, cropType, yieldTons]
+    MarketInsight:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        cropType:
+          type: string
+        yieldTons:
+          type: number
+        bestTimeToSell:
+          type: string
+        estimatedPriceTrend:
+          type: string
+          enum: [RISING, STABLE, FALLING]
+        strategyRecommendation:
+          type: string
+        provider:
+          type: string
+          enum: [gemini, demo]
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, userId, cropType, yieldTons, bestTimeToSell, estimatedPriceTrend, strategyRecommendation, provider, createdAt]
 
